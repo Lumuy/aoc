@@ -1,5 +1,3 @@
-require 'pry'
-
 class ChronalCoordinates
   def initialize(file = 'data')
     @data = File.read(file).split("\n").map do |e|
@@ -33,12 +31,33 @@ class ChronalCoordinates
 
     (x_min..x_max).each do |x|
       (y_min..y_max).each do |y|
-        points += min_distance([x, y]) - infinite unless data.include?([x, y])
+        md = min_distance([x, y])
+        points += md if md.count == 1
       end
     end
 
-    points.group_by(&:itself).map { |_, points| points.count }.max
+    points.reject { |i| infinite.include?(i) }.group_by(&:itself).map { |_, points| points.count }.max
+  end
+
+  # Part 2
+  def dist_sum(p)
+    @data.reduce(0) { |r, e| r + (e[0] - p[0]).abs + (e[1] - p[1]).abs }
+  end
+
+  def region_size(data = @data)
+    xs, ys = data.map(&:first), data.map(&:last)
+    x_min, x_max = xs.min, xs.max
+    y_min, y_max = ys.min, ys.max
+    size = 0
+
+    (x_min..x_max).each do |x|
+      (y_min..y_max).each do |y|
+        size += 1 if dist_sum([x, y]) < 10000
+      end
+    end
+    size
   end
 end
 
 puts ChronalCoordinates.new.largest_area_size
+puts ChronalCoordinates.new.region_size
