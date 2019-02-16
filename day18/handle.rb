@@ -1,13 +1,12 @@
-require 'pry'
-
 class Handle
   def initialize(file = 'data')
     @data = File.read(file).split("\n").map { |line| line.split('') }
   end
 
   # Part 1
-  def total_resouce_value(area = @data, minutes = 10)
-    changes = {}
+  # Part 2
+  def total_resouce_value(minutes = 10)
+    changes, area, holds, cycles = {}, @data, [], []
     max_x, max_y = area[0].size, area.size
 
     # print_area(area, 0)
@@ -38,15 +37,32 @@ class Handle
         end
       end
 
-      changes.each do |(cx, cy), value|
-        area[cx][cy] = value
+      changes.each { |(cx, cy), value| area[cx][cy] = value }
+
+      resource = [area.flatten.count('|'), area.flatten.count('#')].reduce(&:*)
+
+      if holds.include?(resource)
+        unless cycles.include?(resource)
+          cycles << resource
+        else
+          if holds.join.include? cycles.join
+            puts "Part 2: #{cycles[(minutes - holds.size) % cycles.size - 1]}"
+            return
+          else
+            cycles = []
+          end
+        end
       end
+
+      holds << resource
 
       # print_area(area, time)
     end
 
     puts "Part 1: #{area.flatten.count('|') * area.flatten.count('#')}"
   end
+
+  private
 
   def print_area(area, time)
     puts
@@ -56,3 +72,4 @@ class Handle
 end
 
 Handle.new.total_resouce_value
+Handle.new.total_resouce_value(1_000_000_000)
