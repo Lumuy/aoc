@@ -1,39 +1,42 @@
-require 'pry'
-require 'matrix'
-
 class Handle
-  def initialize(n = 880751)
-    @recipes = n
-  end
+  class << self
+    def step
+      scoreboard, first, second = [3, 7], 0, 1
 
-  # Part 1
-  def the_scores_of_the_ten_recipes(recipes = @recipes)
-    scoreboard, first, second = '37', 0, 1
+      loop do
+        sum = scoreboard[first] + scoreboard[second]
+        (scoreboard << sum / 10; yield scoreboard) if sum > 9
+        scoreboard << sum % 10
+        yield scoreboard
 
-    while scoreboard.size <= recipes + 10 do
-      scoreboard += (scoreboard[first].to_i + scoreboard[second].to_i).to_s
-
-      first  = (first  + 1 + scoreboard[first].to_i)  % scoreboard.size
-      second = (second + 1 + scoreboard[second].to_i) % scoreboard.size
+        first = (first + 1 + scoreboard[first]) % scoreboard.size
+        second = (second + 1 + scoreboard[second]) % scoreboard.size
+      end
     end
 
-    scoreboard[recipes, 10]
-  end
+    def count_recipes(input = 880751)
+      start, len, digits = nil, 0, input.to_s.chars.map(&:to_i)
 
-  # Part 2
-  def appear_after_recipes(recipes = 880751.to_s)
-    scoreboard, first, second = '37', 0, 1
+      step do |scoreboard|
+        if scoreboard.size == input + 10
+          puts "Part 1: #{scoreboard[input, 10].join}"
+        end
 
-    until scoreboard.match(/#{recipes}/) do
-      scoreboard += (scoreboard[first].to_i + scoreboard[second].to_i).to_s
+        unless scoreboard.last == digits[len]
+          len = 0
+          start = nil
+        end
 
-      first  = (first  + 1 + scoreboard[first].to_i)  % scoreboard.size
-      second = (second + 1 + scoreboard[second].to_i) % scoreboard.size
+        if scoreboard.last == digits[len]
+          len += 1
+          start = scoreboard.size - 1 if start.nil?
+          break if len == digits.size
+        end
+      end
+
+      puts "Part 2: #{start}"
     end
-
-    scoreboard.index(recipes)
   end
 end
 
-# puts Handle.new.the_scores_of_the_ten_recipes
-puts Handle.new.appear_after_recipes
+Handle.count_recipes
