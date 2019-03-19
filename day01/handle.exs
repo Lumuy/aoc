@@ -17,27 +17,26 @@ defmodule Handle do
   # Part 2
   def frequency do
     get_inputs()
-    |> sum_list([0])
-    |> Enum.reverse
-    |> reaches_twice([], :false)
+    |> reaches_twice
     |> IO.inspect
   end
 
-  defp sum_list([], result), do: result
-  defp sum_list([head | tail], result) do
-    sum_list(tail, [List.first(result) + head | result])
-  end
+  defp reaches_twice(list), do: _reaches_twice(list, list, [0], [])
 
-  defp reaches_twice([n | _], _, :true), do: n
-  defp reaches_twice([h1 | t1], [], :false), do: reaches_twice(t1, [h1], :false)
-  defp reaches_twice([h1 | t1], [h2 | t2], :false) do
-    if h1 in [h2 | t2] do
-      reaches_twice([h1 | t1], [h2 | t2], :true)
+  defp _reaches_twice(_, _, _, result) when result != [] do
+    List.first(result)
+  end
+  defp _reaches_twice(base, [], list, []) do
+    _reaches_twice(base, base, list, [])
+  end
+  defp _reaches_twice(base, [h | t], list, []) do
+    e = List.first(list) + h
+    if e in list do
+      _reaches_twice(base, t, list, [e])
     else
-      reaches_twice(t1, [h1] ++ [h2 | t2], :false)
+      _reaches_twice(base, t, [e | list], [])
     end
   end
-  defp reaches_twice(_, _, _), do: raise("error")
 
 end
 
