@@ -1,92 +1,154 @@
 require 'pry'
+require 'set'
 
 class Handle
-  def initialize(file = 'sample_data')
-    @data = {}
-    File.read(file).split("\n").map(&:chars).each.with_index do |arr, y|
+  def load(file)
+    File.read(file).split("\n")
+  end
+  def initialize(file = 'test_data1')
+    @data   = {}
+    content = load(file)
+    content.map(&:chars).each.with_index do |arr, y|
       arr.each_with_index { |e, x| @data[[x, y]] = e }
     end
+    @width  = content[0].size
+    @height = content.size
   end
 
-  # Part 1
-  def the_outcome_of_combat(area = @data)
-    hps = area.select { |_, v| ['G', 'E'].include?(v) }.keys
-              .reduce({}) { |r, k| r.merge!(k => 200) }
-    binding.pry
+  def the_outcome_of_combat(area = @data.dup)
+    rounds = 0
+    hps    = area.select { |_, v| 'GE'.include?(v) }.keys
+                 .reduce({}) { |r, p| r.merge(p => 200) }
+
+    loop do
+      # one round
+      reading_order(hps).each do |current, hp|
+        enemies = area.select { |_, v| v == 'GE'.delete(area[current]) }
+        ranges  = reading_order(enemies).map { |enemy, _| next_step(current, enemy, area) }.compact
+        target  = ranges.sort_by { |e| e[1] }[0][0] unless ranges.empty?
+
+        if target && enemy_adjacent?(current, area)
+          move(current, target, area, hps)
+          current = target
+        end
+        attack(current, area, hps)
+      end
+
+      # end
+      rounds += 1
+      # test
+      print_area(rounds, area)
+      puts hps
+      break if hps.keys.map { |p| area[p] }.uniq.size == 1
+    end
+
+    # Part 1
+    puts rounds
+    puts hps.values.sum
+    rounds * hps.values.sum
   end
 
-  def round_step(area, hps)
-    goblins = area.select { |_, v| v == 'G' }.keys
-    elves   = area.select { |_, v| v == 'E' }.keys
-    walls   = area.select { |_, v| v == '#' }.keys
-    cavern  = area.select { |_, v| v == '.' }.keys
-    temp    = area
+  def enemy_adjacent?(current, area)
+    type = 'GE'.delete(area[current])
+    adjacents(current).select { |p| area[p] == type } == []
+  end
 
-    reading_order(goblins + elves).each do |point|
-      enemies   = elves.include?(point) ? goblins : evles
-      reachable = reachable_points(enemies, area, point)
-      nearest   = nearest_points(reachable, point)
-      chosen    = reading_order(nearest).first
+  def move(current, target, area, hps)
+    hp = hps[current]
+    hps[target] = hp
+    hps.delete(current)
 
-      # move
-      x1, y1 = point
-      x2, y2 = chosen
+    type = area[current]
+    area[target] = type
+    area[current] = '.'
+  end
 
-      goal = [x1 + 1, y1] if x2 > x1 && y2 >= y1
-      goal = [x1 - 1, y1] if x2 < x1 && y2 >= y1
-      goal = [x1, y1 - 1] if y2 < y1
+  def attack(current, area, hps)
+    type = 'GE'.delete(area[current])
+    enemies = adjacents(current).select { |p| area[p] == type }
+    e_hps = hps.select { |p, _| enemies.include?(p) }
+    e_hps = reading_order(e_hps).sort_by { |k, v| v }
 
-      # replace
-      type = elves.include?(point) ? 'E' : 'G'
-      temp[chosen] = type
-      temp[point]  = '.'
+    unless e_hps.empty?
+      e_point, e_hp = e_hps[0]
+      new_hp = e_hp -3
+      hps[e_point] = e_hp - 3
 
-      # attach
+      if new_hp < 1
+        hps.delete(e_point)
+        area[e_point] = '.'
+      else
+        hps[e_point] = new_hp
+      end
     end
   end
 
-  def reachable_points(points, area, spoint)
-    sx, sy = spoint
-    adjacents = points.reduce([]) do |r, (x , y)|
-      r << [x - 1, y]
-      r << [x + 1, y]
-      r << [x, y - 1]
-      r << [x, y + 1]
-    end.select { |point| area[point] == '.' }
-    adjacents.select do |dx, dy|
-      x_min, x_max = [sx, dx].min, [sx, dx].max
-      y_min, y_max = [sy, dy].min, [sy, dy].max
-      top = (x_min..x_max).map { |bx| [bx, y_min] } +
-            (y_min..y_max).map { |by| [x_max, by] } -
-            [sx, sy] - [dx, dy]
-      bom = (x_min..x_max).map { |bx| [bx, y_max] } +
-            (y_min..y_max).map { |by| [x_min, by] } -
-            [sx, sy] - [dx, dy]
-      top.all? { |e| area[e] == '.' } ||
-      bom.all? { |e| area[e] == '.' }
+  def next_step(current, target, area)
+    possible = adjacents(current).select { |p| area[p] == '.' }
+
+    options = [target]
+    seen = []
+
+    distance = 0
+    next_point = nil
+
+    loop do
+      reachable = options.reduce([]) do |r, p|
+        r + adjacents(p)
+      end.select { |p| area[p] == '.' } - seen
+      reachable = reachable.uniq
+
+      break if reachable.empty?
+
+      options = reachable
+      seen |= reachable
+      distance += 1
+      reached = possible & reachable
+
+      unless reached.empty?
+        next_point = reached[0]
+        break
+      end
     end
+
+    [next_point, distance] if next_point
   end
 
-  def nearest_points(points, spoint)
-    hash = points.reduce({}) do |r, dpoint|
-      r.merge!(dpoint => point_distance(spoint, dpoint))
-    end
-    min_distance = hash.values.min
-    # attack
-    hash.select { |_, v| v == min_distance }.keys
+  def adjacents(point)
+      x, y   = point
+
+      [[x, y - 1], [x - 1, y], [x + 1, y], [x, y + 1]].select do |dx, dy|
+        dx > 0 && dx < @width - 1 && dy > 0 && dy < @height - 1
+      end
   end
 
-  def point_distance(spoint, dpoint)
+  def can_attack(spoint, dpoint)
     sx, sy = spoint
     dx, dy = dpoint
-    (sx - dx).abs + (sy - dy).abs
+
+    (sx - dx).abs + (sy - dy).abs == 1
   end
 
   # top-to-bottom then left-to-right
   def reading_order(points)
-    points.sort_by { |_, y| y }
-          .sort_by { |x, _| x }
+    points.to_a
+          .group_by { |e| e[0][1] }
+          .reduce({}) { |res, (k, v)| res.merge(k => v.sort_by { |e| e[0][0] }) }
+          .sort.to_h.values
+          .reduce([]) { |res, e| res + e }
+          .to_h
+  end
+
+  def print_area(rounds, area)
+    puts "After #{rounds} rounds"
+    w, h = area.to_a[-1][0]
+    (0..h).each do |y|
+      (0..w).each do |x|
+        print area[[x, y]]
+      end
+      puts
+    end
   end
 end
 
-Handle.new.the_outcome_of_combat
+puts Handle.new.the_outcome_of_combat
