@@ -3,26 +3,26 @@ package main
 import "testing"
 
 func TestAmplificationCircuit(t *testing.T) {
-  s1 := getMaxSignal(input_test1)
-  s2 := getMaxSignal(input_test2)
-  s3 := getMaxSignal(input_test3)
-  s4 := getMaxFeedbackSignal(input_test4)
-  s5 := getMaxFeedbackSignal(input_test5)
-  if s1 != 43210 {
-    t.Errorf("Max thruster signal should be 43210, but %d", s1)
-  }
-  if s2 != 54321 {
-    t.Errorf("Max thruster signal should be 54321, but %d", s2)
-  }
-  if s3 != 65210 {
-    t.Errorf("Max thruster signal should be 65210, but %d", s3)
-  }
-  if s4 != 139629729 {
-    t.Errorf("Max feedback thruster signal should be 139629729, but %d", s4)
-  }
-  if s5 != 18216 {
-    t.Errorf("Max feedback thruster signal should be 18216, but %d", s5)
-  }
+	s1 := getMaxSignal(input_test1)
+	s2 := getMaxSignal(input_test2)
+	s3 := getMaxSignal(input_test3)
+	s4 := getMaxFeedbackSignal(input_test4)
+	s5 := getMaxFeedbackSignal(input_test5)
+	if s1 != 43210 {
+		t.Errorf("Max thruster signal should be 43210, but %d", s1)
+	}
+	if s2 != 54321 {
+		t.Errorf("Max thruster signal should be 54321, but %d", s2)
+	}
+	if s3 != 65210 {
+		t.Errorf("Max thruster signal should be 65210, but %d", s3)
+	}
+	if s4 != 139629729 {
+		t.Errorf("Max feedback thruster signal should be 139629729, but %d", s4)
+	}
+	if s5 != 18216 {
+		t.Errorf("Max feedback thruster signal should be 18216, but %d", s5)
+	}
 }
 
 const input_test1 string = `3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0`

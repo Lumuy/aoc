@@ -1,69 +1,69 @@
 package main
 
 import (
-  "fmt"
-  "strings"
+	"fmt"
+	"strings"
 )
 
 func getInput(content string) map[string]string {
-  res := make(map[string]string)
-  for _, line := range strings.Split(content, "\n") {
-    array := strings.Split(line, ")")
-    res[array[1]] = array[0]
-  }
-  return res
+	res := make(map[string]string)
+	for _, line := range strings.Split(content, "\n") {
+		array := strings.Split(line, ")")
+		res[array[1]] = array[0]
+	}
+	return res
 }
 
 func getTotalOrbits(input string) (count int) {
-  data := getInput(input)
-  for _, v := range data {
-    for ;v != ""; {
-      v = data[v]
-      count++
-    }
-  }
+	data := getInput(input)
+	for _, v := range data {
+		for v != "" {
+			v = data[v]
+			count++
+		}
+	}
 
-  return count
+	return count
 }
 
 func reverseArray(arr []string) (res []string) {
-  size := len(arr)
-  for i := size - 1; i >= 0; i-- {
-    res = append(res, arr[i])
-  }
-  return res
+	size := len(arr)
+	for i := size - 1; i >= 0; i-- {
+		res = append(res, arr[i])
+	}
+	return res
 }
 
 func getAllMasses(input, name string) (masses []string) {
-  data := getInput(input)
-  next_mass := data[name]
-  for ;next_mass != ""; {
-    masses = append(masses, next_mass)
-    next_mass = data[next_mass]
-  }
-  return reverseArray(masses)
+	data := getInput(input)
+	next_mass := data[name]
+	for next_mass != "" {
+		masses = append(masses, next_mass)
+		next_mass = data[next_mass]
+	}
+	return reverseArray(masses)
 }
 
 func getMinimumTransfers(input, starting, destination string) (count int) {
-  arr1 := getAllMasses(input, starting)
-  arr2 := getAllMasses(input, destination)
+	arr1 := getAllMasses(input, starting)
+	arr2 := getAllMasses(input, destination)
 
-  index := 0
-  for {
-    if arr1[index] != arr2[index] {
-      break
-    }
-    index++
-  }
+	index := 0
+	for {
+		if arr1[index] != arr2[index] {
+			break
+		}
+		index++
+	}
 
-  return len(arr1) + len(arr2) - 2 * index
+	return len(arr1) + len(arr2) - 2*index
 }
 
 func main() {
-  // Part 1
-  fmt.Println(getTotalOrbits(input))
-  // Part 2
-  fmt.Println(getMinimumTransfers(input, "YOU", "SAN"))
+	// Part 1
+	fmt.Println(getTotalOrbits(input))
+	// Part 2
+	fmt.Println(getMinimumTransfers(input, "YOU", "SAN"))
 }
 
 const input string = `PJK)X3G
