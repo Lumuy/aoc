@@ -24,6 +24,52 @@ func fetchValue(data []int, pos int, mode int) (int, bool) {
 	return 0, false
 }
 
+func isEqualArray(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func contains(arr [][]int, sub []int) bool {
+	for _, ele := range arr {
+		if isEqualArray(ele, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+func combination(arr []int) (res [][]int) {
+	if len(arr) == 1 {
+		return [][]int{arr}
+	}
+
+	for i, v := range arr {
+		var reduce []int
+		reduce = append(reduce, arr[0:i]...)
+		reduce = append(reduce, arr[i:len(arr)]...)
+
+		for _, subarr := range combination(reduce) {
+			for j := 0; j < len(subarr); j++ {
+				var add []int
+				add = append(add, arr[0:j]...)
+				add = append(add, v)
+				add = append(add, arr[j:len(subarr)]...)
+				if !contains(res, add) {
+					res = append(res, add)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func process(data []int, pointer, input int) (bool, []int, int, int) {
 	var res []string
 	var hang bool
@@ -127,41 +173,27 @@ func addInt(left, right int) int {
 	return left*i + right
 }
 
+func getRangeArray(min, max int) (arr []int) {
+	for i := min; i <= max; i++ {
+		arr = append(arr, i)
+	}
+	return arr
+}
+
 func getMaxSignal(input string) (max int) {
-	for i1 := 0; i1 < 5; i1++ {
-		for i2 := 0; i2 < 5; i2++ {
-			if i2 == i1 {
-				continue
-			}
-			for i3 := 0; i3 < 5; i3++ {
-				if i3 == i1 || i3 == i2 {
-					continue
-				}
-				for i4 := 0; i4 < 5; i4++ {
-					if i4 == i1 || i4 == i2 || i4 == i3 {
-						continue
-					}
-					for i5 := 0; i5 < 5; i5++ {
-						if i5 == i1 || i5 == i2 || i5 == i3 || i5 == i4 {
-							continue
-						}
+	available_phases := combination(getRangeArray(0, 4))
+	for _, phases := range available_phases {
+		output := 0
+		for _, phase := range phases {
+			_, data, pointer, out1 := process(getInput(input), 0, phase)
+			_, _, _, out2 := process(data, pointer, output)
+			output = addInt(out1, out2)
+		}
 
-						output := 0
-						for _, phase := range []int{i1, i2, i3, i4, i5} {
-							_, data, pointer, out1 := process(getInput(input), 0, phase)
-							_, _, _, out2 := process(data, pointer, output)
-							output = addInt(out1, out2)
-						}
-
-						if output > max {
-							max = output
-						}
-					}
-				}
-			}
+		if output > max {
+			max = output
 		}
 	}
-
 	return max
 }
 
@@ -228,6 +260,8 @@ func getMaxFeedbackSignal(input string) (max int) {
 }
 
 func main() {
+	arr := combination(getRangeArray(0, 4))
+	fmt.Println(arr)
 	// Part 1
 	fmt.Println(getMaxSignal(input))
 	// Part 2
