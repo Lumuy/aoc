@@ -3,17 +3,17 @@ package main
 import "testing"
 
 func Test(t *testing.T) {
-	code1 := process(getInput(input_test1), 1)
-	code2 := process(getInput(input_test2), 1)
-	code3 := process(getInput(input_test3), 1)
-	if code1 != "1125899906842624" {
-		t.Errorf("Test failed, should be 1125899906842624, but %s", code1)
+	p1 := process(input_test1, 1)
+	p2 := process(input_test2, 1)
+	p3 := process(input_test3, 1)
+	if p1.Msg[0] != 1125899906842624 {
+		t.Errorf("Test failed, should be 1125899906842624, but %d", p1.Msg[0])
 	}
-	if code2 != "1091204-1100110011001008100161011006101099" {
-		t.Errorf("Test failed, should be %s, but %s", "1091204-1100110011001008100161011006101099", code2)
+	if p2.Msg[0] != 109 {
+		t.Errorf("Test failed, should be %d, but %d", 109, p2.Msg[0])
 	}
-	if code3 != "1219070632396864" {
-		t.Errorf("Test failed, should be 1219070632396864, but %s", code3)
+	if p3.Msg[0] != 1219070632396864 {
+		t.Errorf("Test failed, should be 1219070632396864, but %d", p3.Msg[0])
 	}
 }
 
