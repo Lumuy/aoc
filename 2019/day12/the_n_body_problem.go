@@ -15,7 +15,12 @@ type Moon struct {
 	pos, vel Point
 }
 
-func getInput(in string) (moons []Moon) {
+type MoonSet struct {
+	moons []Moon
+}
+
+func getInput(in string) MoonSet {
+	var moons []Moon
 	for _, line := range strings.Split(in, "\n") {
 		xyz := regexp.MustCompile(`[-]?\d+`).FindAllString(line, -1)
 		x, _ := strconv.Atoi(xyz[0])
@@ -24,7 +29,7 @@ func getInput(in string) (moons []Moon) {
 
 		moons = append(moons, Moon{pos: Point{x, y, z}})
 	}
-	return moons
+	return MoonSet{moons}
 }
 
 func gravity(x1, x2 int) int {
@@ -37,25 +42,23 @@ func gravity(x1, x2 int) int {
 	}
 }
 
-func move(moons []Moon) []Moon {
-	for i, _ := range moons {
-		for j, _ := range moons {
+func (m *MoonSet) move() {
+	for i, _ := range m.moons {
+		for j, _ := range m.moons {
 			if i == j {
 				continue
 			}
-			moons[i].vel.x += gravity(moons[i].pos.x, moons[j].pos.x)
-			moons[i].vel.y += gravity(moons[i].pos.y, moons[j].pos.y)
-			moons[i].vel.z += gravity(moons[i].pos.z, moons[j].pos.z)
+			m.moons[i].vel.x += gravity(m.moons[i].pos.x, m.moons[j].pos.x)
+			m.moons[i].vel.y += gravity(m.moons[i].pos.y, m.moons[j].pos.y)
+			m.moons[i].vel.z += gravity(m.moons[i].pos.z, m.moons[j].pos.z)
 		}
 	}
 
-	for i, _ := range moons {
-		moons[i].pos.x += moons[i].vel.x
-		moons[i].pos.y += moons[i].vel.y
-		moons[i].pos.z += moons[i].vel.z
+	for i, _ := range m.moons {
+		m.moons[i].pos.x += m.moons[i].vel.x
+		m.moons[i].pos.y += m.moons[i].vel.y
+		m.moons[i].pos.z += m.moons[i].vel.z
 	}
-
-	return moons
 }
 
 func intAbs(x int) int {
@@ -71,19 +74,19 @@ func intAbs(x int) int {
 	1 - y Axix equal
 	2 - y Axix equal
 */
-func equalMoonsAxis(l, r []Moon, mode int) bool {
-	for i, _ := range l {
+func equalMoonsAxis(l, r *MoonSet, mode int) bool {
+	for i, _ := range l.moons {
 		switch mode {
 		case 0:
-			if !(l[i].pos.x == r[i].pos.x && r[i].vel.x == 0) {
+			if !(l.moons[i].pos.x == r.moons[i].pos.x && l.moons[i].vel.x == r.moons[i].vel.x) {
 				return false
 			}
 		case 1:
-			if !(l[i].pos.y == r[i].pos.y && r[i].vel.y == 0) {
+			if !(l.moons[i].pos.y == r.moons[i].pos.y && l.moons[i].vel.y == r.moons[i].vel.y) {
 				return false
 			}
 		case 2:
-			if !(l[i].pos.z == r[i].pos.z && r[i].vel.z == 0) {
+			if !(l.moons[i].pos.z == r.moons[i].pos.z && l.moons[i].vel.z == r.moons[i].vel.z) {
 				return false
 			}
 		}
@@ -91,35 +94,36 @@ func equalMoonsAxis(l, r []Moon, mode int) bool {
 	return true
 }
 
-func leastCommonMultiple(x1, x2 int) int {
-	max_common := 1
-	max_number := x1
-
-	if x2 > x1 {
-		max_number = x2
+func gcd(min, max int) int {
+	if min > max {
+		min, max = max, min
 	}
-
-	for i := 1; i <= max_number; i++ {
-		if x1%i == 0 && x2%i == 0 {
-			max_common = i
-		}
+	if min == 0 {
+		return max
+	} else {
+		return gcd(min, max%min)
 	}
+}
 
-	return x1 * x2 / max_common
+func lcm(x1, x2 int) int {
+	return x1 * x2 / gcd(x1, x2)
 }
 
 func process(in string, count int) (total, steps int) {
 	var xc, yc, zc int
 	var rx, ry, rz bool
-	before := getInput(in)
-	after := make([]Moon, len(before))
-	copy(after, before)
+
+	data := getInput(in)
+	before := &data
+	moons := make([]Moon, len(before.moons))
+	copy(moons[:], before.moons)
+	after := &MoonSet{moons}
 
 	for i := 0; ; i++ {
-		after = move(after)
+		after.move()
 
 		if i+1 == count {
-			for _, m := range after {
+			for _, m := range after.moons {
 				pot := intAbs(m.pos.x) + intAbs(m.pos.y) + intAbs(m.pos.z)
 				kin := intAbs(m.vel.x) + intAbs(m.vel.y) + intAbs(m.vel.z)
 
@@ -145,8 +149,8 @@ func process(in string, count int) (total, steps int) {
 		}
 	}
 
-	steps = leastCommonMultiple(xc, yc)
-	steps = leastCommonMultiple(zc, steps)
+	steps = lcm(xc, yc)
+	steps = lcm(zc, steps)
 
 	return total, steps
 }
