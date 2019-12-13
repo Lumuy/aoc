@@ -48,6 +48,14 @@ func parseAddr(p *Program, val, mode int) (addr int) {
 	return addr
 }
 
+func PrepareBeforeRun(p *Program) *Program {
+	p.Msg = []int{}
+	p.Hang = false
+	p.Halts = false
+
+	return p
+}
+
 func Process(p *Program, in int) *Program {
 	for !p.Halts {
 		v := p.Mem[p.Pointer]
