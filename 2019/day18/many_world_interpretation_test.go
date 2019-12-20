@@ -25,6 +25,7 @@ const input1 string = `
 #.....@.a.B.c.d.A.e.F.g#
 ########################
 `
+
 const input2 string = `
 #################
 #i.G..c...e..H.p#
@@ -36,6 +37,7 @@ const input2 string = `
 #l.F..d...h..C.m#
 #################
 `
+
 const input3 string = `
 ########################
 #@..............ac.GI.b#

@@ -1,6 +1,7 @@
 package main
 
 import (
+	intcode "aoc/2019/intcode_program"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -17,6 +18,60 @@ type Unit struct {
 	point Point
 	name  string
 	steps int
+}
+
+type Movement struct {
+	gotKeys     []string
+	curEntrance Point
+	curSteps    int
+}
+
+func getCurrentArea(in string, m Movement) map[Point]string {
+	area := make(map[Point]string)
+	in = strings.Trim(in, "\n")
+
+	openedDoors := make([]string, 0)
+	for _, key := range m.gotKeys {
+		openedDoors = append(openedDoors, strings.ToUpper(key))
+	}
+
+	y := 0
+	for _, line := range strings.Split(in, "\n") {
+		for x, c := range strings.Split(line, "") {
+			p := Point{x, y}
+			if intcode.SliceContains(m.gotKeys, c) ||
+				intcode.SliceContains(openedDoors, c) ||
+				c == "@" {
+				area[p] = "."
+			} else {
+				area[p] = c
+			}
+		}
+		y++
+	}
+	area[m.curEntrance] = "@"
+
+	return area
+}
+
+func increaseMovement(in string, m Movement) ([]Movement, bool) {
+	ms := make([]Movement, 0)
+	area := getCurrentArea(in, m)
+
+	curReachableKeys := reachableKeys(area, m.curEntrance)
+	if len(curReachableKeys) == 0 {
+		return ms, false
+	}
+	// fmt.Println("----reachable keys------>", curReachableKeys)
+
+	for _, u := range curReachableKeys {
+		steps := m.curSteps + u.steps
+		keys := append(m.gotKeys, u.name)
+
+		ms = append(ms, Movement{keys, u.point, steps})
+	}
+
+	return ms, true
 }
 
 func getArea(input string) map[Point]string {
@@ -100,42 +155,33 @@ func getEntrance(area map[Point]string) (entrance Point) {
 
 func shortestPathSteps(input string) (steps int) {
 	area := getArea(input)
-	collectedKeys := make([]string, 0)
+	entrance := getEntrance(area)
+	movements := []Movement{{[]string{}, entrance, 0}}
 
 	for {
-		nextUnit := Unit{}
-		entrance := getEntrance(area)
+		goon := true
+		newMovements := make([]Movement, 0)
 
-		reachable_keys := reachableKeys(area, entrance)
-		if len(reachable_keys) == 0 {
+		for _, m := range movements {
+			ms, done := increaseMovement(input, m)
+			newMovements = append(newMovements, ms...)
+			goon = goon && done
+		}
+
+		if !goon {
 			break
 		}
-		fmt.Println("------reachable keys------->")
-		for _, u := range reachable_keys {
-			fmt.Printf("%s, ", u.name)
-		}
-		fmt.Println()
 
-		// key and door pair
-		for _, v := range reachable_keys {
-			nextUnit = v
-		}
+		movements = newMovements
 
-		// clear matched door
-		for p, s := range area {
-			if s == strings.ToUpper(nextUnit.name) {
-				area[p] = "."
-			}
-		}
-		// move from entrance to key
-		area[entrance] = "."
-		entrance = nextUnit.point
-		area[entrance] = "@"
-		steps += nextUnit.steps
-		collectedKeys = append(collectedKeys, nextUnit.name)
+		fmt.Println("-----increase movements size---collected keys number---> ", len(movements), len(movements[0].gotKeys))
 	}
 
-	fmt.Println("--------Collected order------> ", collectedKeys)
+	for i, m := range movements {
+		if i == 0 || steps > m.curSteps {
+			steps = m.curSteps
+		}
+	}
 
 	return steps
 }
