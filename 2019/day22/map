@@ -1,0 +1,31 @@
+/*
+	Two consecutive "deal into stack" will cancel each other.
+
+					LEFT            |         RIGHT
+	-------------------------------------------------
+	| deal into new stack   | cut size-x            |
+	| cut x                 | deal into new stack   |
+	-------------------------------------------------
+	| deal into new stack   | deal with increment x |
+	| deal with increment x | cut size+1-x          |
+	|												| deal into new stack   |
+	-------------------------------------------------
+
+	-------------------------------------------------
+	| cut x                 | cut (x+y)%size        |
+	| cut y                 |                       |
+	-------------------------------------------------
+	| cut x                 | deal with increment y |
+	| deal with increment y | cut (x*y)%szie        |
+	-------------------------------------------------
+
+	-----------------------------------------------------------
+	| deal with increment x | deal with increment (x*y)%size  |
+	| deal with increment y |															    |
+	----------------------------------------------------------
+
+	The table's left has same effect with right.
+*/
+
+fa       fb
+fb    => fa
