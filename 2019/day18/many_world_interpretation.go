@@ -42,6 +42,8 @@ type Item struct {
 
 type Area map[Point]byte
 
+var originArea = make(map[Point]byte)
+
 func main() {
 	input := readFile("input")
 	// Part 1
@@ -51,6 +53,9 @@ func main() {
 
 func shortestPathSteps(input string) int {
 	area := parseInput(input)
+	for k, v := range area {
+		originArea[k] = v
+	}
 	return process(area)
 }
 
@@ -117,12 +122,51 @@ func process(area Area) int {
 	return find(entrance, 0, allKeys, 0, math.MaxInt32, cs)
 }
 
+func reachableKeys(key byte, collected uint32) (keys uint32) {
+	var curPos Point
+	for p, char := range originArea {
+		if char == key {
+			curPos = p
+		}
+	}
+
+	var spreads []Point
+	spreads = append(spreads, curPos)
+
+	seen := make(map[Point]bool)
+	seen[curPos] = true
+
+	for len(spreads) != 0 {
+		current := spreads[0]
+		spreads = spreads[1:]
+
+		for _, p := range current.Adjacents() {
+			if seen[p] {
+				continue
+			}
+			seen[p] = true
+			val := originArea[p]
+			if isDoor(val) {
+				continue
+			} else if isKey(val) {
+				keys = keys | bitFromKey(val)
+				continue
+			} else if isEntrance(val) || isWall(val) {
+				spreads = append(spreads, p)
+			}
+		}
+	}
+
+	return keys
+}
+
 func find(node *Node, collectedKeys, allKeys uint32, curDistance, bestDistance int, cs []string) int {
 	if keysCollected(collectedKeys, allKeys) {
 		return curDistance
 	}
 
-	fmt.Println("collected keys------> ", cs)
+	// fmt.Println("collected keys------> ", cs)
+	reachable := reachableKeys(node.Key, collectedKeys)
 
 	for _, conn := range node.Connections {
 		if !keysCollected(collectedKeys, conn.RequiredKeys) {
@@ -130,6 +174,16 @@ func find(node *Node, collectedKeys, allKeys uint32, curDistance, bestDistance i
 		}
 
 		if keysCollected(collectedKeys, bitFromKey(conn.NextNode.Key)) {
+			continue
+		}
+
+		// fmt.Printf("%b \n", reachableKeys(node.Key, collectedKeys))
+		// fmt.Println(!keysCollected(reachableKeys(node.Key, collectedKeys), bitFromKey(conn.NextNode.Key)))
+		// fmt.Println("--------------------------->", cs)
+		// fmt.Printf("%b \n", reachableKeys(node.Key, collectedKeys))
+		// fmt.Printf("%b %s \n", bitFromKey(conn.NextNode.Key), string(conn.NextNode.Key))
+		// fmt.Println(!keysCollected(reachableKeys(node.Key, collectedKeys), bitFromKey(conn.NextNode.Key)))
+		if !keysCollected(reachable, bitFromKey(conn.NextNode.Key)) {
 			continue
 		}
 
@@ -182,6 +236,10 @@ func isEntrance(char byte) bool {
 
 func isKey(char byte) bool {
 	return char >= 'a' && char <= 'z'
+}
+
+func isWall(char byte) bool {
+	return char == '#'
 }
 
 func isDoor(char byte) bool {
