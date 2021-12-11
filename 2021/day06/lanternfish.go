@@ -16,26 +16,40 @@ func parseInput(filename string) (r []int) {
 	return r
 }
 
-func count(arr []int, days int) int {
-	for d := 0; d < days; d++ {
-		var tmp []int
-		for _, n := range arr {
-			if n == 0 {
-				tmp = append(tmp, 6)
-				tmp = append(tmp, 8)
-			} else {
-				tmp = append(tmp, n - 1)
-			}
-		}
-		arr = tmp
+func step(n, days int) (count int) {
+	if n < days {
+		count += step(6, days-n-1)
+		count += step(8, days-n-1)
+	} else {
+		count = 1
 	}
 
-	return len(arr)
+	return count
+}
+
+func countElement(arr []int, ele int) (r int) {
+	for _, val := range arr {
+		if ele == val {
+			r++
+		}
+	}
+
+	return r
+}
+
+func count(arr []int, days int) (r int) {
+	for n := 1; n < 6; n++ {
+		r += countElement(arr, n) * step(n, days)
+	}
+
+	return r
 }
 
 func main() {
 	input := parseInput("input")
 	p1 := count(input, 80)
+	p2 := count(input, 256)
 
 	fmt.Println(p1)
+	fmt.Println(p2)
 }
